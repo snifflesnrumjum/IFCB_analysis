@@ -105,12 +105,12 @@ def grab_features(in_feature, in_class, automated, models=None):
         #create a temporary dataframe to hold the data; this should solve the issue of feature file sizes not matching up with
         #class file sizes due to MATLAB scripts randomly skipping images
         classified_data = pd.DataFrame(class_data, index=roinums, columns=['class'])
-        print len(class_data), len(class_data[0]), outdata.shape
+        print(len(class_data), len(class_data[0]), outdata.shape)
         #concat the two dataframes based on intersection of index
         outdata = pd.concat([outdata, classified_data], axis=1).dropna(subset=['Biovolume'])
        
     else:
-        print len(class_data), len(class_data[0]), outdata.shape
+        print(len(class_data), len(class_data[0]), outdata.shape)
         if len(class_data) == outdata.shape[0]:
             outdata['class'] = class_data
         else:
@@ -179,8 +179,8 @@ def get_num_cells_in_chain(in_class, in_features, models):
         temp_counts = models['{0}_scaler'.format(in_class)].transform(temp_features.values.reshape(1, -1))
         temp_counts = models[in_class].predict(temp_counts)
         temp = models['{0}_scaler_targets'.format(in_class)].inverse_transform(temp_counts)
-	if int(round(temp)) < 1:
-	    temp = 1
+    if int(round(temp)) < 1:
+        temp = 1
         #print temp
     else:
         temp = 1
@@ -202,7 +202,7 @@ def load_models(indir):
     # update hemiaulus to hemiaulus_curved
     models['Hemiaulus_curved'] = models['Hemiaulus']
     models['Hemiaulus_curved_scaler'] = models['Hemiaulus_scaler']
-    models['Hemiaulus_curved_scaler_targets'] = models['Hemiaulus_scaler_targets]
+    models['Hemiaulus_curved_scaler_targets'] = models['Hemiaulus_scaler_targets']
     
     return models
 
@@ -214,7 +214,7 @@ def load_class_file_automated(in_class):
             class_data = list classifications for each roi image
     """
     f = loadmat(class_path + in_class, verify_compressed_data_integrity=False)
-    print f.keys()
+    print(f.keys())
     class_data = f['TBclass_above_threshold'] #use this line for automated classifier results; can be 'TBclass_above_optthresh' if available
     class_data = [category[0][0] for category in class_data] #un-nest the MATLAB stuff #use this line for automated classifier results
     category_list = f['class2useTB']
@@ -282,49 +282,49 @@ def load_feature_file(in_feature):
 if __name__ == '__main__':
     #to do: load models, load the features and class files,
     # grab the list of files from each directory
-    print "Loading models...",
+    print("Loading models...", end='')
     models = load_models(model_path) #load the models
-    print "done."
-    print "Getting features and class files..."
+    print("done.")
+    print("Getting features and class files...")
     list_of_feature_files = os.listdir(feature_path)
     list_of_class_files = os.listdir(class_path)
     list_of_class_files.sort()
     files_done = set([x[:filename_length] for x in os.listdir(outpath)])
-    print "done."
-    print "Feature files: {}".format(len(list_of_feature_files))
-    print "Class files  : {}".format(len(list_of_class_files))
-    print "Num files left to process: {}".format(len(list_of_class_files) - len(files_done))
+    print("done.")
+    print("Feature files: {}".format(len(list_of_feature_files)))
+    print("Class files  : {}".format(len(list_of_class_files)))
+    print("Num files left to process: {}".format(len(list_of_class_files) - len(files_done)))
     # start working through the class files individually
     num_errors = 0
     for class_index, indiv_file in enumerate(list_of_class_files):
         if indiv_file[-3:] == 'mat' and indiv_file[:filename_length] not in files_done and indiv_file[0] == filestart:
             if not date_limiter or date_limiter == indiv_file[:len(date_limiter)]:
-                print "Processing {}...".format(indiv_file),
+                print("Processing {}...".format(indiv_file), end='')
                 features_found = True
-	        try:
+            try:
                 if 1:
-	            feature_index = 0
-	            while list_of_feature_files[feature_index][:filename_length] != indiv_file[:filename_length]:
-	                feature_index += 1
-	                if feature_index >= len(list_of_feature_files)-1:
-	                    print "feature file not found (first try)."
-	                
-	                    #raise ValueError("The feature file was not found") #this will error out and stop the program
-	                    #print "feature file not found (first try)."
-	                    features_found = False
+                    feature_index = 0
+                while list_of_feature_files[feature_index][:filename_length] != indiv_file[:filename_length]:
+                    feature_index += 1
+                    if feature_index >= len(list_of_feature_files)-1:
+                        print("feature file not found (first try).")
+                    
+                        #raise ValueError("The feature file was not found") #this will error out and stop the program
+                        #print "feature file not found (first try)."
+                        features_found = False
                         #print feature_index
 
-	            if features_found:
-	                #print "grabbing features..."
-	                temp_biovolumes = grab_features(list_of_feature_files.pop(feature_index), list_of_class_files[class_index], automated_or_manual, models)
-	                temp_biovolumes.to_csv(outpath + indiv_file[:-3] + 'csv')
-	                print "done!"
-	       	except:
+                if features_found:
+                    #print "grabbing features..."
+                    temp_biovolumes = grab_features(list_of_feature_files.pop(feature_index), list_of_class_files[class_index], automated_or_manual, models)
+                    temp_biovolumes.to_csv(outpath + indiv_file[:-3] + 'csv')
+                    print("done!")
+            except:
                 
-    		    num_errors += 1
-    	            print "something went wrong. Number of errors = {0}".format(num_errors)
-    		    if num_errors > 20:
-    			    raise ValueError('Number of errors exceeded 20')
+                num_errors += 1
+                print("something went wrong. Number of errors = {0}".format(num_errors))
+                if num_errors > 20:
+                    raise ValueError('Number of errors exceeded 20')
     
         else:
             continue
