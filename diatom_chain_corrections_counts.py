@@ -47,11 +47,13 @@ def grab_config_variables(infile):
         
     outdict = {}
     for line in in_config:
-        if line[0] == '#':
+        if len(line) < 1:
+            pass
+        elif line[0] == '#':
             pass
         elif '=' in line:
             temp = line.split(' ', maxsplit=2)
-            outdict[temp[0]] = temp[2]
+            outdict[temp[0]] = temp[2].replace("'", "").replace(" ", "") #remove any quote marks
     
     return outdict
 
@@ -65,9 +67,13 @@ outpath = input_dict['outpath']
 date_limiter = input_dict['date_limiter']
 automated_or_manual = input_dict['automated_or_manual']
 model_path = input_dict['model_path']
-cnn = input_dict['cnn']
 ifcb_style = input_dict['ifcb_style']
-
+if input_dict['cnn'] == 'True':
+    cnn = True
+elif input_dict['cnn'] == 'False':
+    cnn = False
+else:
+    raise ValueError('cnn must be True or False')
 
 if ifcb_style == 'old':
     filename_length = 21
@@ -195,9 +201,11 @@ def load_models(indir):
                       'Thalassiosira']      
     models = {}
     for cat in spp:
-        models[cat] = pickle.load(open("{0}{1}_net.pkl".format(indir, cat)))
-        models['{0}_scaler'.format(cat)] = pickle.load(open("{0}{1}_scaler.pkl".format(indir, cat)))
-        models['{0}_scaler_targets'.format(cat)] = pickle.load(open("{0}{1}_scaler_targets.pkl".format(indir, cat)))
+        print(indir + cat)
+        temp = open("{0}{1}_net.pkl".format(indir, cat), 'rb')
+        models[cat] = pickle.load(temp, encoding='latin1')
+        models['{0}_scaler'.format(cat)] = pickle.load(open("{0}{1}_scaler.pkl".format(indir, cat), 'rb'), encoding='latin1')
+        models['{0}_scaler_targets'.format(cat)] = pickle.load(open("{0}{1}_scaler_targets.pkl".format(indir, cat), 'rb'), encoding='latin1')
         
     # update hemiaulus to hemiaulus_curved
     models['Hemiaulus_curved'] = models['Hemiaulus']
